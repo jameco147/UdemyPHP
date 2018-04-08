@@ -15,6 +15,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
   if (empty($usuario) or empty($password) or empty($password2)) {
     $errores .= '<li>Por favor rellena todos los datos correctamente</li>';
 
+  } else {
+    try {
+      $conexion = new PDO('mysql:host=localhost;dbname=login_practica', 'root', '');
+    } catch (PDOException $e) {
+        echo "Error: " . $e->getMessage();
+    }
+
+    $statment  = $conexion->prepare('SELECT * FROM usuarios WHERE usuario = :usuario LIMIT 1');
+    $statment->execute(array(':usuario' => $usuario));
+    $resultado = $statment->fetch();
+
+    if ($resultado != false) {
+        $errores .= 'El nombre de usuario ya existe';
+    }
+
+    $password = hash('sha512', $password);
+    $password2 = hash('sha512', $password2);
+
+    if ($password != $password2) {
+      $errores .= '<li>Las contraseñas no son iguales</li>';
+    }
+  }
+
+  if ($errores == '') {
+    $statment = $conexion->prepare('INSERT INTO usuarios (id, usuario, pass) VALUES (null, :usuario, :pass) ');
+    $statment->execute(array(':usuario' => $usuario, ':pass' => $password ));
+    header('Location: login.php');
   }
 
 }
